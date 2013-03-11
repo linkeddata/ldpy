@@ -1,0 +1,19 @@
+BrowserMatch MSIE ie
+Header set X-UA-Compatible "IE=Edge,chrome=1" env=ie
+
+<IfModule mod_fcgid.c>
+   <Files ld.py>
+       SetHandler fcgid-script
+       Options +ExecCGI
+   </Files>
+</IfModule>
+
+Options +FollowSymlinks
+
+RewriteEngine On
+
+RewriteCond %{HTTPS} !on
+RewriteRule ^(.*)$ https://%{SERVER_NAME}/$1 [R,QSA,L]
+
+RewriteRule ^ld.py - [S=1]
+RewriteRule ^(.*)$ ld.py/$1 [L,QSA]
