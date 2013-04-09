@@ -70,13 +70,12 @@ class Graph(object):
             p = Parser(self._f0)
             assert p.parse_into_model(self._g, 'file:' + self._p0, base_uri=self._base, handler=self._h)
         else:
+            self._g.append(Statement(Node(uri_string=self._base),ns.rdf['type'],ns.stat['Directory']))
             for k in os.listdir(self._p0):
                 kn = Node(uri_string=str(k))
                 st = os.stat(self._p0 + '/' + k)
                 if stat.S_ISDIR(st.st_mode):
-                    self._g.append(Statement(kn,ns.rdf['type'],ns.rdfs['Container']))
-                elif stat.S_ISREG(st.st_mode):
-                    self._g.append(Statement(kn,ns.rdf['type'],ns.rdfs['Resource']))
+                    self._g.append(Statement(kn,ns.rdf['type'],ns.stat['Directory']))
                 self._g.append(Statement(kn,ns.stat['atime'],Node(literal=str(st.st_atime))))
                 self._g.append(Statement(kn,ns.stat['ctime'],Node(literal=str(st.st_ctime))))
                 self._g.append(Statement(kn,ns.stat['mtime'],Node(literal=str(st.st_mtime))))
