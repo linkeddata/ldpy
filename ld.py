@@ -72,14 +72,17 @@ class Graph(object):
         else:
             self._g.append(Statement(Node(uri_string=self._base),ns.rdf['type'],ns.stat['Directory']))
             for k in os.listdir(self._p0):
-                kn = Node(uri_string=str(k))
                 st = os.stat(self._p0 + '/' + k)
                 if stat.S_ISDIR(st.st_mode):
+                    kn = Node(uri_string=str(k)+'/')
                     self._g.append(Statement(kn,ns.rdf['type'],ns.stat['Directory']))
-                self._g.append(Statement(kn,ns.stat['atime'],Node(literal=str(st.st_atime))))
-                self._g.append(Statement(kn,ns.stat['ctime'],Node(literal=str(st.st_ctime))))
-                self._g.append(Statement(kn,ns.stat['mtime'],Node(literal=str(st.st_mtime))))
-                self._g.append(Statement(kn,ns.stat['size'],Node(literal=str(st.st_size))))
+                else:
+                    kn = Node(uri_string=str(k))
+                self._g.append(Statement(Node(uri_string=self._base),ns.rdfs['member'],kn))
+                self._g.append(Statement(kn,ns.stat['atime'],Node(literal=str(int(st.st_atime)))))
+                self._g.append(Statement(kn,ns.stat['ctime'],Node(literal=str(int(st.st_ctime)))))
+                self._g.append(Statement(kn,ns.stat['mtime'],Node(literal=str(int(st.st_mtime)))))
+                self._g.append(Statement(kn,ns.stat['size'],Node(literal=str(int(st.st_size)))))
 
     def append(self, s, name=None, mime_type=None):
         p = Parser(name=name, mime_type=mime_type)
