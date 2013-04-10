@@ -50,14 +50,21 @@ class Graph(object):
                     break
         self._s = Storage(storage_name='hashes', name='', options_string="hash-type='memory'")
         self._g = Model(self._s)
+        self._editable = False
 
-    def info(self):
-        return {
-            'base-uri': self._base,
-            'storage-format': self._f0,
-            'storage-path': self._p0,
-            'triples': len(self._g),
+    def headers(self, more=None):
+        d = {
+            'Base': self._base,
+            'Storage-Format': self._f0,
+            'Storage-Path': self._p0,
+            'Triples': len(self._g),
         }
+        if self._editable:
+            d['MS-Author-Via'] = 'DAV, SPARQL'
+            d['DAV'] = '1'
+        if more:
+            d.update(more)
+        return d
 
     def exists(self, p=None):
         return os.path.exists(p or self._p0)
@@ -67,6 +74,7 @@ class Graph(object):
             return self._g.load(uri=uri, name=name, handler=self._h)
         st = os.stat(self._p0)
         if not stat.S_ISDIR(st.st_mode):
+            self._editable = True
             p = Parser(self._f0)
             assert p.parse_into_model(self._g, 'file:' + self._p0, base_uri=self._base, handler=self._h)
         else:
@@ -144,14 +152,14 @@ class Graph(object):
                 f = self.TYPEMAP[elt[1]]
                 m = mtype
                 break
-        return Response(self.toString(f), status=status, headers=self.info(), mimetype=m)
+        return Response(self.toString(f), status=status, headers=self.headers(), mimetype=m)
 
 @app.route('/')
 @app.route('/<path:graph>')
 def httpRead(graph=''):
     g = Graph(graph)
     if not g.exists():
-        return '', 404, {}
+        return '', 404, g.headers()
     g.load()
     return g()
 
@@ -166,27 +174,27 @@ def httpWrite(graph):
         if d:
             g.update(d, mime_type=request.content_type)
         g.save()
-        return '', 204, g.info()
-    return '', 415, g.info()
+        return '', 204, g.headers()
+    return '', 415, g.headers()
 
 @app.route('/<path:graph>', methods=('DELETE',))
 def httpDELETE(graph):
     g = Graph(graph)
     if not g.exists():
-        return '', 404, {}
+        return '', 404, g.headers()
     g.unlink()
     if g.exists():
-        return '', 409, {}
-    return '', 204, g.info()
+        return '', 409, g.headers()
+    return '', 204, g.headers()
 
 @app.route('/<path:graph>', methods=('MKCOL',))
 def httpMKCOL(graph):
     g = Graph(graph)
     if g.exists():
-        return '', 409, {}
+        return '', 409, g.headers()
     os.makedirs(graph)
     if not g.exists():
-        return '', 404, {}
+        return '', 404, g.headers()
     g.load()
     return g(status=201)
 

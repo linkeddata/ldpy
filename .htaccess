@@ -13,7 +13,7 @@ Options +FollowSymlinks
 RewriteEngine On
 
 RewriteCond %{HTTPS} !on
-RewriteRule ^(.*)$ https://%{SERVER_NAME}/$1 [R,QSA,L]
+RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [R,QSA,L]
 
 RewriteRule ^ld.py - [S=1]
 RewriteRule ^(.*)$ ld.py/$1 [L,QSA]
