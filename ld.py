@@ -116,6 +116,16 @@ class Graph(object):
             return self.append(s, name, mime_type)
 
     def toString(self, f):
+        if f == 'html':
+            return '''<!DOCTYPE html><html><head>
+<link type="text/css" rel="stylesheet" href="https://w3.scripts.mit.edu/tabulator/tabbedtab.css" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://w3.scripts.mit.edu/tabulator/js/mashup/mashlib.js"></script>
+<script type="text/javascript">
+jQuery.ajaxPrefilter(function(options) { if (options.crossDomain) { options.url = "https://w3.scripts.mit.edu/proxy?uri=" + encodeURIComponent(options.url); } });
+jQuery(document).ready(function() { tabulator.outline.GotoSubject(tabulator.kb.sym(window.location.href), true, undefined, true, undefined); });
+</script></head><body>
+<div class="TabulatorOutline" id="DummyUUID"><table id="outline"></table></div></body></html>'''
         s = Serializer(name=f)
         s.set_feature(Uri('http://feature.librdf.org/raptor-writeBaseURI'), Node(literal='0')._node)
         for k, v in list(ns.__dict__.items()):
@@ -144,8 +154,8 @@ class Graph(object):
         return Response(r.to_string('http://www.w3.org/ns/formats/SPARQL_Results_JSON', base_uri=self._base))
 
     def __call__(self, status=None, headers=None, body=None):
-        f = 'turtle'
-        m = 'text/turtle'
+        f = 'html'
+        m = 'text/html'
         for mtype, q in request.accept_mimetypes:
             elt = mtype.split('/', 1) + ['']
             if elt[1] in self.TYPEMAP:
