@@ -143,7 +143,7 @@ class Graph(object):
                     return Response(r.to_string('http://www.w3.org/ns/formats/SPARQL_Results_'+k.upper(), base_uri=self._base))
         return Response(r.to_string('http://www.w3.org/ns/formats/SPARQL_Results_JSON', base_uri=self._base))
 
-    def __call__(self, status=None):
+    def __call__(self, status=None, headers=None, body=None):
         f = 'turtle'
         m = 'text/turtle'
         for mtype, q in request.accept_mimetypes:
@@ -152,14 +152,16 @@ class Graph(object):
                 f = self.TYPEMAP[elt[1]]
                 m = mtype
                 break
-        return Response(self.toString(f), status=status, headers=self.headers(), mimetype=m)
+        if body is None and (status is None or status < 400):
+            body = self.toString(f)
+        return Response(body, status=status, headers=self.headers(headers), mimetype=m)
 
 @app.route('/')
 @app.route('/<path:graph>')
 def httpRead(graph=''):
     g = Graph(graph)
     if not g.exists():
-        return '', 404, g.headers()
+        return g(status=404)
     g.load()
     return g()
 
@@ -174,27 +176,27 @@ def httpWrite(graph):
         if d:
             g.update(d, mime_type=request.content_type)
         g.save()
-        return '', 204, g.headers()
-    return '', 415, g.headers()
+        return g(status=204, body='')
+    return g(status=415)
 
 @app.route('/<path:graph>', methods=('DELETE',))
 def httpDELETE(graph):
     g = Graph(graph)
     if not g.exists():
-        return '', 404, g.headers()
+        return g(status=404)
     g.unlink()
     if g.exists():
-        return '', 409, g.headers()
-    return '', 204, g.headers()
+        return g(status=409)
+    return g(status=204, body='')
 
 @app.route('/<path:graph>', methods=('MKCOL',))
 def httpMKCOL(graph):
     g = Graph(graph)
     if g.exists():
-        return '', 409, g.headers()
+        return g(status=409)
     os.makedirs(graph)
     if not g.exists():
-        return '', 404, g.headers()
+        return g(status=404)
     g.load()
     return g(status=201)
 
